@@ -1,3 +1,11 @@
+# software environment
+```
+conda env create -f env.yml
+```
+
+# memory requirement
+needs >250G for the step of retrieving the AD matrix from MalariaGEN
+
 # scripts
 ```
 01_download.py
