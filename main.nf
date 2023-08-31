@@ -353,15 +353,17 @@ process RUN_INFOMAP {
     tag "${args.genome_set_id}_${are_peaks_removed}"
     publishDir "${resdir}/${args.genome_set_id}_${label}/${ibdcaller}/ifm_output/",  mode: 'symlink'
     input:
-        tuple val(label), val(ibdcaller), path(ibd_obj), val(are_peaks_removed), val(args)
+        tuple val(label), val(ibdcaller), path(ibd_obj), val(are_peaks_removed), val(args), val(name_map)
     output:
         tuple val(label), val(ibdcaller), val(are_peaks_removed), path("*_member.pq")
     script:
     def cut_mode = are_peaks_removed? 'rmpeaks': 'orig'
     def args_local = [
         ibd_obj: ibd_obj,
-        npop: args.npop,
-        nsam: args.nsam,
+        // no using this for making meta file
+        // npop: args.npop,
+        // nsam: args.nsam,
+        name_map: name_map,
         genome_set_id: args.genome_set_id,
         cut_mode: cut_mode,
         ntrials: params.ifm_ntrials,
@@ -498,7 +500,8 @@ workflow WF_MP{
 
     // *********************** input channel *************************
     ch_sets = Channel.fromList([
-        [label: "structured", genome_set_id: 100],
+        [label: "structured", genome_set_id: 100, 
+        name_map: file("${projectDir}/datasets/02_make_dataset/vcf/structured/sample_name_map_structured.txt", checkIfExists:true)],
     ])
     chr_chrnos = Channel.fromList(1..(params.nchroms))
 
@@ -551,8 +554,8 @@ workflow WF_MP{
     // ********************** Process ibd ***************************
 
     PROC_INFOMAP(ch_grouped_ibd_vcf)
-    // out.ifm_orig_ibd_obj
-    // out.ifm_rmpeaks_ibd_obj
+    // out.ifm_orig_ibd_obj       // label, ibdcaller, ibd_obj
+    // out.ifm_rmpeaks_ibd_obj    // label, ibdcaller, ibd_obj
 
 
     // ********************** Run Infomap ***************************
@@ -565,9 +568,11 @@ workflow WF_MP{
             ch_sets.map{d-> 
                 def label = d.label
                 def args = [genome_set_id: d.genome_set_id]
-                return [label, args]
+                def name_map = d.name_map
+                return [label, args, name_map]
             },
         by: 0)
+        // label, ibdcaller, ibd_obj, are_peaks_removed, args, name_map
 
     RUN_INFOMAP(ch_in_run_infomap)
 
