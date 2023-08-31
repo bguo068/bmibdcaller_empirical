@@ -29,6 +29,11 @@ for set0 in sets:
     sample_list_fn = target_dir / f"sample_list_{set0}.txt"
     meta0 = pd.read_csv(f"meta_{set0}.txt", sep="\t")
     meta0.Sample.to_csv(sample_list_fn, index=None, header=None)
+    sample_map_fn = target_dir / f"sample_name_map_{set0}.txt"
+    sample_map = pd.DataFrame(
+        {"Sample": meta0.Sample, "Id": [f"tsk_{i}" for i in range(meta0.shape[0])]}
+    )
+    sample_map.to_csv(sample_map_fn, sep="\t", index=None, header=None)
 
     # iterate over chromosomes
     for chrno in range(1, 15):
@@ -38,8 +43,10 @@ for set0 in sets:
         ## 2. remove rare variants or non-segregating variants
         cmd = f"""
         bcftools view  -S {sample_list_fn} {vcf_fn} -Ou \\
-          |  bcftools view -q 0.01:minor -Oz -o {out_vcf_fn}
+          | bcftools view -q 0.01:minor -Oz \\
+          | bcftools reheader -s {sample_map_fn} -o {out_vcf_fn}
         """
+        print(cmd)
         run(cmd, shell=True, check=True)
 
 # count number of sites for resulting vcf files (genome-wide)
