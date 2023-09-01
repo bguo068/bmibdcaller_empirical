@@ -78,12 +78,23 @@ run(cmd, shell=True)
 
 df_ibd = pd.read_csv("hmmibd_out.hmm.txt", sep="\t")[lambda x: (x["different"] == 0)]
 df_ibd.columns = ["Id1", "Id2", "Chr", "Start", "End", "Diff", "Nsnp"]
+
+# read the frac file to get the tmrca information
+# sample1 sample2 N_informative_sites     discordance     log_p   N_fit_iteration N_generation    N_state_transition      seq_shared_best_traj    fract_sites_IBD fract_vit_sites_IBD
+df_frac = pd.read_csv("hmmibd_out.hmm_fract.txt", sep="\t")
+df_frac = df_frac[["sample1", "sample2", "N_generation"]].copy()
+df_frac.columns = ["Id1", "Id2", "Tmrca"]
+
+# merge tmrca information
+df_ibd = df_ibd.merge(df_frac, on=["Id1", "Id2"], how="left")
+
+
 # update tsk sample name to nunber only names
 df_ibd["Id1"] = df_ibd["Id1"].str.replace("tsk_", "", regex=False)
 df_ibd["Id2"] = df_ibd["Id2"].str.replace("tsk_", "", regex=False)
 # add fake columns
 df_ibd["Ancestor"] = 99999
-df_ibd["Tmrca"] = 100
+# df_ibd["Tmrca"] = 100 # used the tmrca from the frac file
 df_ibd["HasMutation"] = 0
 
 sel_cols = ["Id1", "Id2", "Start", "End", "Ancestor", "Tmrca", "HasMutation"]
