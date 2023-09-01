@@ -42,8 +42,8 @@ label_str = "_".join(
 )
 
 # read ibd
-genome_14_100 = ibdutils.Genome.get_genome("simu_14chr_100cm")
-ibd = ibdutils.IBD(genome=genome_14_100, label=f"{label_str}_orig")
+genome = ibdutils.Genome.get_genome("Pf3D7")
+ibd = ibdutils.IBD(genome=genome, label=f"{label_str}_orig")
 ibd.read_ibd(ibd_fn_lst=args.ibd_files)
 ibd.calc_ibd_cov()
 ibd.find_peaks()
@@ -75,7 +75,7 @@ if len(args.ibd_files_true) != 0:
         run(cmd, shell=True, check=True)
         ibd_files_filtered.append(out)
     # load filterred IBD
-    ibd_filt = ibdutils.IBD(genome=genome_14_100, label=f"{label_str}_orig")
+    ibd_filt = ibdutils.IBD(genome=genome, label=f"{label_str}_orig")
     ibd_filt.read_ibd(ibd_fn_lst=ibd_files_filtered)
     # replace `_df` member of ibd variable but not the `coverage` and `peaks`
     ibd._df = ibd_filt._df

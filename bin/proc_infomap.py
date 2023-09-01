@@ -12,8 +12,8 @@ args = pa.parse_args()
 
 
 # read ibd
-genome_14_100 = ibdutils.Genome.get_genome("simu_14chr_100cm")
-ibd = ibdutils.IBD(genome=genome_14_100, label="orig")
+genome = ibdutils.Genome.get_genome("Pf3D7")
+ibd = ibdutils.IBD(genome=genome, label="orig")
 ibd.read_ibd(ibd_fn_lst=args.ibd_files)
 
 
