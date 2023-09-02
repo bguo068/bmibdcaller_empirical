@@ -88,11 +88,6 @@ df_frac.columns = ["Id1", "Id2", "Tmrca"]
 # merge tmrca information
 df_ibd = df_ibd.merge(df_frac, on=["Id1", "Id2"], how="left")
 
-# mark IBD segments that with length longer than 70% of chromosome length
-# with trmca = 0
-chr_len = df_ibd.End.max()  # approximation
-df_ibd.loc[(df_ibd.End - df_ibd.Start) >= 0.7 * chr_len, "Tmrca"] = 0
-
 
 # update tsk sample name to nunber only names
 df_ibd["Id1"] = df_ibd["Id1"].str.replace("tsk_", "", regex=False)
