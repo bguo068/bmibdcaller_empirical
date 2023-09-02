@@ -13,6 +13,7 @@ import dask
 import dask.array as da
 from dask.diagnostics.progress import ProgressBar
 import allel
+import pandas as pd
 
 # silence some warnings
 dask.config.set(**{"array.slicing.split_large_chunks": False})
@@ -22,13 +23,22 @@ pf7 = malariagen_data.Pf7()
 pf7_metadata = pf7.sample_metadata()
 pf7_metadata.to_csv("pf7_meta.tsv", sep="\t", index=None)
 
+# note this file is directly downloaded from the malariaGEN website instead of
+# using the malariagen_data package
+pf7_fws = pd.read_csv("./Pf7_fws.txt", sep="\t")
+
+# merge with meta
+metadata = pf7_metadata.merge(pf7_fws, on="Sample", how="left")
+
 
 # basic filters for variants and samples
 extended_variant_dataset = pf7.variant_calls(extended=True)
 
 ## 1. remove samples not passing qc
-sample_pass_qc = pf7_metadata["QC pass"].values
-ds_sample_pass = extended_variant_dataset.isel(samples=sample_pass_qc)
+sample_pass_qc = metadata["QC pass"].values
+is_monoclonal = metadata["Fws"] >= 0.95
+sel_samples = sample_pass_qc & is_monoclonal
+ds_sample_pass = extended_variant_dataset.isel(samples=sel_samples)
 
 filter_pass = ds_sample_pass["variant_filter_pass"].values
 var_is_snp = ds_sample_pass["variant_is_snp"].values
@@ -41,15 +51,16 @@ ac1 = (ds_bi["call_genotype"].data[:, :, :2] == 1).sum(axis=[1, 2]).compute()
 nsamples = ds_bi.dims["samples"]
 nploidy = ds_bi.dims["ploidy"]
 
-non_single_double = (ac0 >= 2) & (ac1 >= 2)
+non_mac_le_10 = (ac0 >= 10) & (
+    ac1 >= 10
+)  # remove utra rare variants to reduce download size
 smiss_le_0_8 = (1 - (ac0 + ac1) / (nsamples * nploidy)) <= 0.8
 
-(non_single_double & smiss_le_0_8).mean()
+(non_mac_le_10 & smiss_le_0_8).sum()
 
 # remove singleton and doubleton and sites with high missiningness
-ds_bi = ds_bi.isel(variants=(non_single_double) & smiss_le_0_8)
+ds_bi = ds_bi.isel(variants=(non_mac_le_10) & smiss_le_0_8)
 
-ds_bi["call_AD"][:, :, :2]
 # variant_AF/AC are zeros (not calculated)
 # (biallelic_dataset["variant_AF"][:, 1].values > 0).sum()
 # biallelic_dataset["variant_AC"][:, 0] >= 2
@@ -65,13 +76,17 @@ np.save("alleles.npy", ds_bi["variant_allele"].values[:, :2])
 
 
 # 	Array	Chunk
-# Bytes	102.42 GiB	2.67 MiB
-# Shape	(1696765, 16203, 2)	(7004, 100, 2)
+# Bytes	8.93 GiB	440.34 kiB
+# Shape	(231596, 10348, 2)	(1281, 88, 2)
+# Dask graph	77748 chunks in 5 graph layers
 # Data type	int16 numpy.ndarray
 ad = ds_bi["call_AD"].data[:, :, :2].compute()
 np.save("/data/bing/pf7_ad.npy", ad)
 
-
-# # 54G
+# 	Array	Chunk
+# Bytes	4.46 GiB	901.83 kiB
+# Shape	(231596, 10348, 2)	(5247, 88, 2)
+# Dask graph	12749 chunks in 4 graph layers
+# Data type	int8 numpy.ndarray
 gt = ds_bi["call_genotype"].values
 np.save("/data/bing/pf7_gt.npy", gt)

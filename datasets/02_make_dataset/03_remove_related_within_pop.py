@@ -36,7 +36,7 @@ def subset_for_as_se_e(meta, ibd):
 subset_for_as_se_e(meta, ibd)
 
 
-def subset_for_af_w():
+def subset_for_af_w(meta, ibd):
     meta2 = meta[meta["Population"] == "AF-W"]
     pop_samples = meta2.Sample
     ibd2 = ibd.duplicate(new_label="alldom09imp_AF-W")
@@ -46,16 +46,6 @@ def subset_for_af_w():
     unrelated2 = ibd2.get_unrelated_samples(M2)
 
     unrelated2.to_csv("unrelated_samples_AF-W.txt", index=None, header=None)
-
-    meta[meta.Sample.isin(unrelated2)]
-
-    meta[meta.Sample.isin(unrelated2)].Country.value_counts()
-    meta[meta.Sample.isin(unrelated2)].Year.value_counts().sort_index()
-    meta[(meta.Sample.isin(unrelated2)) & (meta.Year > 2009)].groupby(
-        ["Country", "Year"]
-    )["Sample"].count().unstack().fillna(0).astype(int)
-
-    meta[(meta.Sample.isin(unrelated2)) & (meta.Year >= 2016) & (meta.Year <= 2018)]
 
 
 subset_for_af_w(meta, ibd)

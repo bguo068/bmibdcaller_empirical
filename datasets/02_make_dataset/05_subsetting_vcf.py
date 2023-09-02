@@ -8,7 +8,7 @@ from subprocess import run, check_output
 # ----------------------------------------------
 # ----------------------------------------------
 def get_in_vcf(chrno: int) -> Path:
-    p = Path(f"../../input/impute/pf7_dom_0_9_imp_chr{chrno}.vcf.gz")
+    p = Path(f"../../input/impute/pf7_dom_imp_chr{chrno}.vcf.gz")
     assert p.exists()
     # change suffix from vcf.gz to vcf.gz.csi
     csi = p.with_suffix(".gz.csi")
@@ -67,6 +67,6 @@ for set0 in sets:
 # ----------------------------------------------
 # ----------------------------------------------
 # Number of non-rare sites
-# singlepop_AF-W_Ghana_16_18:  15194
-# singlepop_AS-SE-E_10_12:     11805
-# structured:                  20428
+# singlepop_AF-W_Ghana_16_18: 11460
+# singlepop_AS-SE-E_10_12: 11711
+# structured: 16685

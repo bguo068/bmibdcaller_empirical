@@ -71,7 +71,7 @@ workflow {
             seqlen: params.chrlens[chrno], 
             genome_set_id: 0 
         ]
-        def vcf = file("${projectDir}/../../input/impute/pf7_dom_0_9_imp_chr${chrno}.vcf.gz", checkIfExists:true)
+        def vcf = file("${projectDir}/../../input/impute/pf7_dom_imp_chr${chrno}.vcf.gz", checkIfExists:true)
         [label, chrno, args, vcf]
     } 
     CALL_IBD_HAPIBD(ch_input)

@@ -6,7 +6,7 @@ pos = np.load("pos.npy")
 chrom = np.load("chr.npy", allow_pickle=True)
 samples = np.load("samples.npy", allow_pickle=True)
 alleles = np.load("alleles.npy", allow_pickle=True)
-dgt_orig = np.load("/data/bing/pf7_gt_dominant_0_9.npy")
+dgt_orig = np.load("/data/bing/pf7_gt_dominant.npy")
 dgt = dgt_orig.copy()
 
 # 1. remove sites of rare variants or high missiningness
@@ -124,10 +124,10 @@ header = """##fileformat=VCFv4.2
 df2
 
 
-with open("pf7_unimp_dom_0_9.vcf", "w") as f:
+with open("pf7_unimp_dom.vcf", "w") as f:
     f.write(header)
     df2.to_csv(f, sep="\t", index=None, header=True)
 
 
-cmd = f""" bgzip "pf7_unimp_dom_0_9.vcf" """
+cmd = f""" bgzip pf7_unimp_dom.vcf """
 run(cmd, shell=True, check=True)

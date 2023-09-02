@@ -50,4 +50,4 @@ for ichunk, (start, end) in enumerate(chunks):
 
     print(f"done {ichunk+1}/{len(chunks)}")
 
-np.save("/data/bing/pf7_gt_dominant_0_9.npy", gt)
+np.save("/data/bing/pf7_gt_dominant.npy", gt)

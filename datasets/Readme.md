@@ -1,8 +1,7 @@
 # Goal
 
 Based on the clean data prepared in the `input` folder, prepare dataset subsets
-of around a size of 1000, one subset of single-population, one subset of a
-population with structure.
+of around a size of 1000 or less, one subset of single-population, one subset of a population with structure.
 
 # Steps
 
@@ -17,5 +16,5 @@ population with structure.
         - ESEA
         - WAF
         - EAF
-        - SAM
+        - OCE
 

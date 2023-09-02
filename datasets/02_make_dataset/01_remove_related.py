@@ -12,4 +12,4 @@ ibd.read_ibd(ibd_fn_lst)
 M = ibd.make_ibd_matrix()
 unrelated = ibd.get_unrelated_samples(M)
 
-unrelated.to_csv("unrelated_samples_10k.txt", index=None, header=None)
+unrelated.to_csv("unrelated_samples_6k.txt", index=None, header=None)

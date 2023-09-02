@@ -54,3 +54,8 @@ impute/pf7_dom_0_9_imp_chr12.vcf.gz
 impute/pf7_dom_0_9_imp_chr13.vcf.gz
 impute/pf7_dom_0_9_imp_chr14.vcf.gz
 ```
+
+# Fws:
+```
+wget https://www.malariagen.net/sites/default/files/Pf7_fws.txt
+```

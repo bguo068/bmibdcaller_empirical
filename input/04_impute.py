@@ -53,8 +53,8 @@ with open("impute/chrname_map.txt", "w") as f:
         f.write(f"{chrname}\t{chrno}\n")
 
 # run beagle
-input_vcf = "./pf7_unimp_dom_0_9.vcf.gz"
-output_vcf_prefix = "impute/pf7_dom_0_9_imp"
+input_vcf = "./pf7_unimp_dom.vcf.gz"
+output_vcf_prefix = "impute/pf7_dom_imp"
 map = "impute/map.txt"
 
 cmd = f"""
