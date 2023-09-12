@@ -500,9 +500,18 @@ workflow WF_MP{
 
     // *********************** input channel *************************
     ch_sets = Channel.fromList([
-        [label: "structured", genome_set_id: 100, 
-        name_map: file("${projectDir}/datasets/02_make_dataset/vcf/structured/sample_name_map_structured.txt", checkIfExists:true)],
+        [
+            label: "structured", 
+            genome_set_id: 100, 
+            name_map: file("${projectDir}/datasets/02_make_dataset/vcf/structured/sample_name_map_structured.txt", checkIfExists:true)
+        ],
+        [
+            label:"singlepop_AS-SE-E_10_12", 
+            genome_set_id: 1, 
+            name_map: file("${projectDir}/datasets/02_make_dataset/vcf/singlepop_AS-SE-E_10_12/sample_name_map_singlepop_AS-SE-E_10_12.txt", checkIfExists:true)
+        ],
     ])
+
     chr_chrnos = Channel.fromList(1..(params.nchroms))
 
     ch_in_ibdcall_vcf = ch_sets.combine(chr_chrnos).map{d, chrno ->
