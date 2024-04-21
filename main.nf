@@ -8,12 +8,12 @@ params.test = false
 params.resdir = "res"
 params.recombination_rate = 0.01 / 15000
 
-params.min_mac = 20 // assuming homozyogous diploids, eg. min_maf 20 / 2 / 1000 = 0.01
+params.minmaf = 0.01 // assuming homozyogous diploids, eg. min_maf 20 / 2 / 1000 = 0.01
 params.mincm = 2.0
 params.nchroms = 14
 
 params.tpbwt_template_opts = 1
-params.tpbwt_Lm = params.test ? 152: 100 // optimized
+params.tpbwt_Lm = 80 // update on 1/10/24 from 100 -> 80
 params.tpbwt_Lf = params.mincm
 params.tpbwt_use_phase_correction = 0
 
@@ -24,7 +24,7 @@ params.hapibd_maxgap = 1000
 params.hapibd_minmarkers = 70
 
 params.refinedibd_length = params.mincm
-params.refinedibd_lod = 1.1 // TODO: confirm what does lod mean
+params.refinedibd_lod = 1.6 // 1/9/24, update from 1.1 to 1.6
 params.refinedibd_scale = 0
 params.refinedibd_window = 40.0
 
@@ -34,19 +34,24 @@ params.hmmibd_m = 5
 params.isorelate_imiss = 0.3
 params.isorelate_vmiss = 0.3
 params.isorelate_min_snp = 20 // optimized
-params.isorelate_min_mac = 200 // 0.1, which is different from other callers
+params.isorelate_minmaf = 0.1 // 0.1, which is different from other callers
 
-// params.tsinferibd_max_tmrca = [1000, 3000]
+// different from simulated data, as true ibd not available for empeirical data
+params.filt_ibd_by_ov = false 
 
-params.filt_ibd_by_ov = false
+// peak filtering methods
+params.peak_validate_meth = 'ihs' // 'xirs' or 'ihs'
+
+params.ibdne_no_diploid_convertion = "true"
 params.ibdne_mincm = params.mincm
 params.ibdne_minregion = 10
 params.ibdne_flatmeth = ["none", "keep_hap_1_only", "merge"][0]
 
 params.ifm_transform = ["square", "cube", "none"][0]
 params.ifm_ntrials = 1000
-params.ifm_mincm = 2.0
+params.ifm_mincm = 4.0 // update on 1/10/24
 params.ifm_mingwcm = 5.0
+params.ifm_rmchr = 0 // 0 means no chr will be removed
 
 
 params.meta = "" // empty for simulation
@@ -93,7 +98,7 @@ process CALL_IBD_HAPIBD {
         maxgap: params.hapibd_maxgap,
         minextend: params.hapibd_minextend,
         minmarkers: params.hapibd_minmarkers,
-        minmac: params.min_mac,
+        minmaf: params.minmaf,
         mem_gb: task.memory.giga,
         nthreads: task.cpus,
         genome_set_id: args.genome_set_id,
@@ -149,7 +154,7 @@ process CALL_IBD_REFINEDIBD {
         length: params.refinedibd_length,
         scale: params.refinedibd_scale,
         mem_gb: task.memory.giga,
-        minmac: params.min_mac,
+        minmaf: params.minmaf,
         window: params.refinedibd_window,
         nthreads: task.cpus,
         genome_set_id: args.genome_set_id,
@@ -177,7 +182,7 @@ process CALL_IBD_TPBWT {
         chrno: chrno,
         template: params.tpbwt_template_opts, 
         use_phase_correction: params.tpbwt_use_phase_correction,
-        minmac: params.min_mac,
+        minmaf: params.minmaf,
         Lm: params.tpbwt_Lm,
         Lf: params.tpbwt_Lf,
         mem_gb: task.memory.giga,
@@ -208,7 +213,7 @@ process CALL_IBD_HMMIBD {
         n: params.hmmibd_n,
         m: params.hmmibd_m,
         mincm: params.mincm,
-        minmac: params.min_mac,
+        minmaf: params.minmaf,
         genome_set_id: args.genome_set_id,
     ].collect{k, v -> "--${k} ${v}"}.join(" ")
     script:
@@ -235,7 +240,7 @@ process CALL_IBD_ISORELATE {
         chrno: chrno,
         min_snp: params.isorelate_min_snp,
         min_len_bp: Math.round(params.mincm * (0.01/args.r)),
-        minmac: params.min_mac,
+        minmaf: params.isorelate_minmaf,
         imiss: params.isorelate_imiss,
         vmiss: params.isorelate_vmiss,
         cpus: task.cpus,
@@ -272,6 +277,7 @@ process PROC_DIST_NE {
                 path("*_rmpeaks.map"), path("*_rmpeaks.ibd.gz"), emit: ne_input_rmpeaks
         tuple val(label),val(ibdcaller),  path("*.ibddist.ibdobj.gz"), emit: ibddist_ibd_obj
         tuple val(label),val(ibdcaller),  path("*.ibdne.ibdobj.gz"), emit: ibdne_ibd_obj
+        tuple val(label),val(ibdcaller),  path("*_orig_all.ibdcov.ibdobj.gz"), emit: orig_all_ibdcov_ibd_obj
     script:
     // Whether to pass in true ibd list is determined by params.filt_ibd_by_ov 
     def true_ibd_arg = (params.filt_ibd_by_ov && (ibdcaller!="hmmibd")) ? \
@@ -279,6 +285,8 @@ process PROC_DIST_NE {
     def args_local = (true_ibd_arg + [
         ibd_files: "${ibd_lst}", // path is a blank separate list
         vcf_files: "${vcf_lst}", // path is a blank separate list
+        peak_validate_meth: params.peak_validate_meth,
+        ibdne_no_diploid_conversion: params.ibdne_no_diploid_convertion,
         genome_set_id: genome_set_id,
         ibdne_mincm: params.ibdne_mincm,
         ibdne_minregion: params.ibdne_minregion,
@@ -291,7 +299,7 @@ process PROC_DIST_NE {
     stub:
     """
     touch ibdne.jar
-    touch ${genome_set_id}{_orig.sh,_orig.map,_orig.ibd.gz}
+    touch ${genome_set_id}{_orig_all.ibdcov.ibdobj.gz,_orig.sh,_orig.map,_orig.ibd.gz}
     touch ${genome_set_id}{_rmpeaks.sh,_rmpeaks.map,_rmpeaks.ibd.gz}
     touch ${genome_set_id}.ibddist.ibdobj.gz
     touch ${genome_set_id}_orig.ibdne.ibdobj.gz
@@ -317,6 +325,8 @@ process PROC_INFOMAP {
     def args_local = [
         ibd_files: "${ibd_lst}", // path is a blank separate list
         vcf_files: "${vcf_lst}", // path is a blank separate list
+        peak_validate_meth: params.peak_validate_meth,
+        ibdne_no_diploid_conversion: params.ibdne_no_diploid_convertion,
         genome_set_id: genome_set_id,
     ].collect{k, v-> "--${k} ${v}"}.join(" ")
     """
@@ -368,6 +378,9 @@ process RUN_INFOMAP {
         cut_mode: cut_mode,
         ntrials: params.ifm_ntrials,
         transform: params.ifm_transform,
+        ifm_mincm: params.ifm_mincm,
+        ifm_mingwcm: params.ifm_mingwcm,
+        ifm_rmchr: params.ifm_rmchr,
     ].collect{k, v-> "--${k} ${v}"}.join(" ")
     """
     run_infomap.py ${args_local}
@@ -379,16 +392,24 @@ process RUN_INFOMAP {
     """
 }
 
+def get_name_map_fn(data_set_label){
+    // return file("${projectDir}/datasets/02_make_dataset/vcf/singlepop_AF-W_Ghana_16_18/sample_name_map_singlepop_AF-W_Ghana_16_18.txt", checkIfExists:true)
+    return file("${projectDir}/datasets/02_make_dataset/vcf/${data_set_label}/sample_name_map_${data_set_label}.txt", checkIfExists:true)
+}
 
-// Pipeline for single-population datasets
-workflow WF_SP{
+workflow WF_IBD {
 main:
 
     // *********************** input channel *************************
     ch_sets = Channel.fromList([
         [label: "singlepop_AF-W_Ghana_16_18", genome_set_id: 0],
         [label:"singlepop_AS-SE-E_10_12",     genome_set_id: 1],
+        [label:"posseleff_WAF",               genome_set_id: 2],
+        [label:"posseleff_ESEA",              genome_set_id: 3],
+        [label: "structured",                 genome_set_id: 100], 
     ])
+
+
     chr_chrnos = Channel.fromList(1..(params.nchroms))
 
     ch_in_ibdcall_vcf = ch_sets.combine(chr_chrnos).map{d, chrno ->
@@ -402,7 +423,6 @@ main:
     // *********************** Call ibd *************************
 
     CALL_IBD_HAPIBD(ch_in_ibdcall_vcf)
-    // CALL_IBD_TSKIBD(ch_in_ibdcall_trees)
     CALL_IBD_REFINEDIBD(ch_in_ibdcall_vcf)
     CALL_IBD_TPBWT(ch_in_ibdcall_vcf)
     CALL_IBD_HMMIBD(ch_in_ibdcall_vcf)
@@ -410,7 +430,6 @@ main:
 
     // collect IBD and groupby simulation label and ibdcaller
     ch_out_ibd_grp = CALL_IBD_HAPIBD.out.map{it + ["hapibd"]}
-            // .concat( CALL_IBD_TSKIBD.out.map{it + ["tskibd"]})
             .concat(CALL_IBD_REFINEDIBD.out.map{it+ ["refinedibd"]})
             .concat(CALL_IBD_TPBWT.out.map{it + ["tpbwt"]})
             .concat(CALL_IBD_HMMIBD.out.map{it + ["hmmibd"]})
@@ -427,9 +446,6 @@ main:
             def ibd_lst = data_lst.collect{data -> data[1]}
             return ["${label}", ibdcaller, ibd_lst]
         }
-
-    // TODO: will come back to consider remvoing IBD segment overlapping
-    // with IBD segments < 1.5 as determined by hmmibd
 
     ch_true_ibd = CALL_IBD_HMMIBD.out // [label, chrno, ibd]
         .map{label, chrno, ibd-> [groupKey(label, params.nchroms), [chrno, ibd]]}
@@ -459,6 +475,21 @@ main:
         // [label, ibdcaller, ibd_lst, ibd_lst_true, vcf_lst, genome_set_id]
         //                                      ^^^^^^^^^^^^^^
 
+emit:
+    ch_sets = ch_sets
+    ch_grouped_ibd_vcf = ch_grouped_ibd_vcf
+}
+
+
+// Pipeline for single-population datasets
+workflow WF_SP{
+
+take: 
+    ch_sets
+    ch_grouped_ibd_vcf
+
+main:
+
     // ********************** Process ibd ***************************
     // NOTE: although the ibd_files_true is passed, but it can still not used 
     // depending the params.filt_ibd_by_ov = True
@@ -467,11 +498,10 @@ main:
      // out.ne_input_rmpeaks
 
 
-
     // ********************** Run IbdNe ***************************
     ch_in_ibdne = \
             PROC_DIST_NE.out.ne_input_orig.map{it + [false]}  // orig
-        .concat( 
+        .mix( 
             PROC_DIST_NE.out.ne_input_rmpeaks.map {it + [true]}  // rmpeaks
         )
         // label, ibdcaller, jar, sh, map, ibd, are_peaks_removed
@@ -484,7 +514,13 @@ main:
             },
             by: 0) // add args
 
-    RUN_IBDNE(ch_in_ibdne)
+    RUN_IBDNE(
+        ch_in_ibdne
+        // exclude "structed" dataset for Ne inference: not valid
+        .filter{label, ibdcaller, jar, sh, map, ibd, are_peaks_removed, args -> 
+            label != "structured" 
+        }
+    )
 
     emit: 
 
@@ -496,73 +532,22 @@ main:
 
 // Pipeline for multi-population datasets
 workflow WF_MP{
-    main:
 
-    // *********************** input channel *************************
-    ch_sets = Channel.fromList([
-        [
-            label: "structured", 
-            genome_set_id: 100, 
-            name_map: file("${projectDir}/datasets/02_make_dataset/vcf/structured/sample_name_map_structured.txt", checkIfExists:true)
-        ],
-        [
-            label:"singlepop_AS-SE-E_10_12", 
-            genome_set_id: 1, 
-            name_map: file("${projectDir}/datasets/02_make_dataset/vcf/singlepop_AS-SE-E_10_12/sample_name_map_singlepop_AS-SE-E_10_12.txt", checkIfExists:true)
-        ],
-    ])
+take: 
+    ch_sets
+    ch_grouped_ibd_vcf
 
-    chr_chrnos = Channel.fromList(1..(params.nchroms))
-
-    ch_in_ibdcall_vcf = ch_sets.combine(chr_chrnos).map{d, chrno ->
-        def label = d.label
-        def genome_set_id = d.genome_set_id
-        def args = [r: params.recombination_rate, seqlen: params.chrlens[chrno], genome_set_id: genome_set_id]
-        def vcf = file("${projectDir}/datasets/02_make_dataset/vcf/${label}/chr${chrno}.vcf.gz", checkIfExists: true)
-        return [label, chrno, args, vcf]
-    }
-
-    // CALL_IBD_TSINFERIBD(ch_in_ibdcall_vcf_with_ne)
-    CALL_IBD_HAPIBD(ch_in_ibdcall_vcf)
-    // CALL_IBD_TSKIBD(ch_in_ibdcall_trees)
-    CALL_IBD_REFINEDIBD(ch_in_ibdcall_vcf)
-    CALL_IBD_TPBWT(ch_in_ibdcall_vcf)
-    CALL_IBD_HMMIBD(ch_in_ibdcall_vcf)
-    CALL_IBD_ISORELATE(ch_in_ibdcall_vcf)
-
-    // collect IBD and groupby simulation label and ibdcaller
-    ch_out_ibd_grp = CALL_IBD_HAPIBD.out.map{it + ["hapibd"]}
-            // .concat( CALL_IBD_TSKIBD.out.map{it + ["tskibd"]})
-            .concat(CALL_IBD_REFINEDIBD.out.map{it+ ["refinedibd"]})
-            .concat(CALL_IBD_TPBWT.out.map{it + ["tpbwt"]})
-            .concat(CALL_IBD_HMMIBD.out.map{it + ["hmmibd"]})
-            .concat(CALL_IBD_ISORELATE.out.map{it+["isorelate"]})
-            // [label, chrno, ibd, ibdcaller]
-        .map{label, chrno, ibd, ibdcaller ->
-            def key =  groupKey([label, ibdcaller], params.nchroms)
-            def data = [chrno, ibd]
-            return [key, data]}
-        .groupTuple(by: 0, sort: {a, b -> a[0] <=> b[0]}) //sort by chrno
-        .map {key, data_lst ->
-            def label = key[0]
-            def ibdcaller = key[1]
-            def ibd_lst = data_lst.collect{data -> data[1]}
-            def vcf_lst = (1..params.nchroms).collect{chrno -> 
-                file("${projectDir}/datasets/02_make_dataset/vcf/${label}/chr${chrno}.vcf.gz", checkIfExists: true)
-            }
-            return [label, ibdcaller, ibd_lst, vcf_lst]
-        }
-
-  
-    ch_grouped_ibd_vcf = ch_out_ibd_grp
-        // [label, ibdcaller, ibd_lst, vcf_lst]
-        // add genome_set_id
-        .combine(ch_sets.map{d->[d.label, d.genome_set_id]}, by: 0)
-        // [label, ibdcaller, ibd_lst, vcf_lst, genome_set_id]
+main:
 
     // ********************** Process ibd ***************************
 
-    PROC_INFOMAP(ch_grouped_ibd_vcf)
+    PROC_INFOMAP(ch_grouped_ibd_vcf
+        // remove the true ibd list: no need for this
+        .map{
+            label, ibdcaller, ibd_lst, ibd_lst_true, vcf_lst, genome_set_id -> 
+            [label, ibdcaller, ibd_lst,  vcf_lst, genome_set_id] 
+        }
+    )
     // out.ifm_orig_ibd_obj       // label, ibdcaller, ibd_obj
     // out.ifm_rmpeaks_ibd_obj    // label, ibdcaller, ibd_obj
 
@@ -570,21 +555,20 @@ workflow WF_MP{
     // ********************** Run Infomap ***************************
     ch_in_run_infomap = \
         PROC_INFOMAP.out.ifm_orig_ibd_obj.map{it + [false]} // orig
-    .concat (
+    .mix (
         PROC_INFOMAP.out.ifm_rmpeaks_ibd_obj.map{it + [true]} // rmpeaks
     ).combine(
             // [label, args] // args need to only contains genome_set_id
             ch_sets.map{d-> 
                 def label = d.label
                 def args = [genome_set_id: d.genome_set_id]
-                def name_map = d.name_map
+                def name_map = get_name_map_fn(label)
                 return [label, args, name_map]
             },
         by: 0)
         // label, ibdcaller, ibd_obj, are_peaks_removed, args, name_map
 
     RUN_INFOMAP(ch_in_run_infomap)
-
 
     emit:
 
@@ -593,6 +577,7 @@ workflow WF_MP{
 }
 
 workflow {
-    WF_SP()
-    WF_MP()
+    WF_IBD()
+    WF_SP(WF_IBD.out.ch_sets, WF_IBD.out.ch_grouped_ibd_vcf)
+    WF_MP(WF_IBD.out.ch_sets, WF_IBD.out.ch_grouped_ibd_vcf)
 }
