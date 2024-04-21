@@ -2,7 +2,6 @@
 import argparse
 import subprocess
 from pathlib import Path
-import allel
 
 import pandas as pd
 
@@ -23,7 +22,7 @@ parser.add_argument("--lod", type=float, default=0.3)
 parser.add_argument("--length", type=float, default=2.0)
 parser.add_argument("--scale", type=float, default=0)
 parser.add_argument("--mem_gb", type=int, required=True)
-parser.add_argument("--minmac", type=int, default=1, help="min MAC")
+parser.add_argument("--minmaf", type=float, default=0.01, help="min maf")
 parser.add_argument("--nthreads", type=int, default=None)
 parser.add_argument("--genome_set_id", type=int, required=True)
 
@@ -37,14 +36,12 @@ window = args.window
 lod = args.lod
 length = args.length
 scale = args.scale
-minmac = args.minmac
+minmaf = args.minmaf
 mem_gb = args.mem_gb
 nthreads = args.nthreads
 
-# filter by minmac and
+# filter by minmaf and
 # decompression vcf (required by phasedibd)
-nsam = len(allel.read_vcf_headers(vcf).samples)
-minmaf = minmac / nsam / 2
 subprocess.run(
     f"bcftools view -q {minmaf}:minor {vcf} -Oz -o tmp.vcf.gz", shell=True, check=True
 )

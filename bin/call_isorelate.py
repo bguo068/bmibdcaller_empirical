@@ -12,7 +12,7 @@ def get_args(cmd_args=None):
     parser.add_argument("--chrno", type=int, required=True)
     parser.add_argument("--min_snp", type=int, default=20)
     parser.add_argument("--min_len_bp", type=int, default=50000)
-    parser.add_argument("--minmac", type=int, required=True)
+    parser.add_argument("--minmaf", type=float, required=True)
     parser.add_argument("--imiss", type=float, required=True)
     parser.add_argument("--vmiss", type=float, required=True)
     parser.add_argument("--cpus", type=int, default=4)
@@ -30,8 +30,8 @@ min_snp = args.min_snp
 min_len_bp = args.min_len_bp
 bp_per_cm = 0.01 / args.r
 seqlen_in_cm = args.seqlen / bp_per_cm
-# use `minmac` instead of `maf` to make it consistent across different IBD callers
-minmac = args.minmac
+# use `minmaf` instead of `maf` to make it consistent across different IBD callers
+minmaf = args.minmaf
 imiss = args.imiss
 vmiss = args.vmiss
 chrno = args.chrno
@@ -52,7 +52,7 @@ r_code = f"""
 ped <- read.delim("ped.ped", sep=' ', header=F)
 ped[, 5] <- 1
 nsample = nrow(ped)
-maf = {minmac} / 2.0 / nsample
+maf = {minmaf}
 map <- read.delim("ped.map", sep=' ', header=F)
 ped_map <- list(ped=ped, map=map)
 library(isoRelate)

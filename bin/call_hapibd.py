@@ -3,6 +3,8 @@ import argparse
 import subprocess
 import sys
 from pathlib import Path
+import allel
+from math import ceil
 
 import pandas as pd
 
@@ -21,7 +23,7 @@ parser.add_argument("--minoutput", type=float, default=2.0)
 parser.add_argument("--maxgap", type=int, default=1000)
 parser.add_argument("--minextend", type=float, default=1.0)
 parser.add_argument("--minmarkers", type=int, default=100)
-parser.add_argument("--minmac", type=int, default=2)
+parser.add_argument("--minmaf", type=float, default=0.01)
 parser.add_argument("--mem_gb", type=int, required=True)
 parser.add_argument("--nthreads", type=int, default=None)
 parser.add_argument("--genome_set_id", type=int, required=True)
@@ -46,7 +48,7 @@ minoutput = args.minoutput
 maxgap = args.maxgap
 minextend = args.minextend
 minmarkers = args.minmarkers
-minmac = args.minmac
+minmaf = args.minmaf
 
 # ------------------- make genetic map ----------------------------
 with open(f"{chrno}.map", "w") as f:
@@ -54,6 +56,10 @@ with open(f"{chrno}.map", "w") as f:
     f.write("\t".join(fields) + "\n")
     fields = [f"{chrno}", ".", f"{seqlen_in_cm}", f"{int(bp_per_cm * seqlen_in_cm)}"]
     f.write("\t".join(fields) + "\n")
+
+# ------------------ get nsamples -----------------------------
+nsamples = len(allel.read_vcf_headers(vcf).samples)
+minmac = ceil(nsamples * minmaf)
 
 # ------------------- call hapibd ----------------------------------
 map_fn = f"{chrno}.map"
