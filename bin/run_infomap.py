@@ -19,6 +19,10 @@ def parse_args():
     p.add_argument(
         "--transform", type=str, choices=["square", "cube", "none"], default="square"
     )
+    p.add_argument("--ifm_mincm", type=float, default=2)
+    p.add_argument("--ifm_mingwcm", type=float, default=5)
+    p.add_argument("--ifm_rmchr", type=int, default=0)
+
     args = p.parse_args()
     if args.transform == "none":
         args.transform = None
@@ -32,9 +36,12 @@ def run(args) -> pd.DataFrame:
     # tsk_id/PCD113
     name_map = pd.read_csv(args.name_map, sep="\t", names=["RealSample", "Sample"])
     meta = name_map[["Sample", "RealSample"]]
-    meta['Sample'] = meta.Sample.str.replace("tsk_", "").astype(int)
+    meta["Sample"] = meta.Sample.str.replace("tsk_", "").astype(int)
 
-    mat = ibd.make_ibd_matrix()
+    # if ifm_rmchr is a valid chromosome number, remove all IBD from this chromosome
+    ibd._df = ibd._df[lambda df: df.Chromosome != args.ifm_rmchr]
+
+    mat = ibd.make_ibd_matrix(min_seg_cm=args.ifm_mincm, min_gw_ibd_cm=args.ifm_mingwcm)
     member_df = ibd.call_infomap_get_member_df(
         mat, meta, trials=args.ntrials, transform=args.transform
     )
