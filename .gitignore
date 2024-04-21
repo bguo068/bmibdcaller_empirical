@@ -1,3 +1,8 @@
+runs/r240111/*opti
+runs/r240113_opt/opti*
+runs/r240114_noopti/noopti*
+datasets/02_make_dataset/posseleff_inputs*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
