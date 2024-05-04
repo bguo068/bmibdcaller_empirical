@@ -6,13 +6,10 @@
 
 # conda create -n pf7 python=3.10
 # conda activate pf7
-# pip install -q --no-warn-conflicts malariagen_data matplotlib
+# pip install -q --no-warn-conflicts malariagen_data matplotlib=7.13.0
 
 import numpy as np
 import dask
-import dask.array as da
-from dask.diagnostics.progress import ProgressBar
-import allel
 import pandas as pd
 
 # silence some warnings
