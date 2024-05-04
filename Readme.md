@@ -14,20 +14,20 @@ for obtaining true ibd segments from simulated genealogical trees.
 
 
 There are two main components in the repository, including
-1. Scripts and notes to pre-process data available from MalariaGEN Pf7.
+1. Scripts and notes to pre-process data available from [MalariaGEN Pf7](https://www.malariagen.net/resource/34/).
     - Data pre-filtering and downloading, inferring dominant alleles, and
-    imputation. See notes [./input/Readme.md](./input/Readme.md)
-    - Constructing different datasets. See notes [./datasets/Readme.md](./datasets/Readme.md)
+    imputation. See notes [./input/Readme.md](./input/Readme.md).
+    - Constructing different datasets. See notes [./datasets/Readme.md](./datasets/Readme.md).
 2. The Nextflow pipeline to benchmark the performance of multiple IBD callers
 before and after IBD caller parameter optimization: 
-    - [Pipeline entry](./main.nf)
+    - [Pipeline entry](./main.nf).
 
 For the emprical analysis pipeline, the software environment and result folder
 structure of this pipeline are similiar to the
-[bmibdcaller\_simulations](https://github.com/bguo068/posseleff_simulations)
+[bmibdcaller\_simulations](https://github.com/bguo068/bmibdcaller_simulations)
 repository. Details can be found Follow the [readme](https://github.com/bguo068/bmibdcaller_simulations/blob/main/README.md) from the simulation repository.
 
 
 Examples of running the pipeline can be found in  
-- [runs/r240113_opt/run.sh](runs/r240113_opt/run.sh) 
-- [runs/r240113_opt/run.sh](runs/r240113_opt/run.sh) 
+- [runs/r240113_opt/run.sh](runs/r240113_opt/run.sh).
+- [runs/r240114_noopti/run.sh](runs/r240114_noopti/run.sh).
