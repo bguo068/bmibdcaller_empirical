@@ -1,14 +1,16 @@
 #! /usr/bin/env bash
 set -eEx -o pipefail
-source ~/conda_devel.sh
+
+SCRATCH_DIR=/local/scratch/bing/bmibdcaller_empirical/runs/r240114_noopti 
+PIPELINE_DIR=/local/chib/toconnor_grp/bing/bmibdcaller_empirical
+
+# source ~/conda_devel.sh
 conda activate bmibdcaller_simulations
 
-mkdir -p /local/scratch/bing/bmibdcaller_empirical/runs/r240114
-cd /local/scratch/bing/bmibdcaller_empirical/runs/r240114
+mkdir -p ${SCRATCH_DIR}
+cd ${SCRATCH_DIR} 
 
-
-
-nextflow run /local/chib/toconnor_grp/bing/bmibdcaller_empirical/main.nf -profile hq -resume \
+nextflow run ${PIPELINE_DIR}/main.nf -profile hq -resume \
     --hapibd_minoutput 2.0 \
     --hapibd_minseed 2.0 \
     --hapibd_minextend 1.0 \
@@ -28,10 +30,9 @@ nextflow run /local/chib/toconnor_grp/bing/bmibdcaller_empirical/main.nf -profil
     --tpbwt_Lm 300 \
     --tpbwt_Lf 2.0 \
     --tpbwt_use_phase_correction 1 \
-    --filt_ibd_by_ov false  --ibdne_mincm 2.0 --ifm_mincm 2.0 --resdir noopti_nofiltov_ne2_ifm2
-
-
-nextflow run /local/chib/toconnor_grp/bing/bmibdcaller_empirical/main.nf -profile hq -resume \
+    --filt_ibd_by_ov false  --ibdne_mincm 2.0 --ifm_mincm 2.0 --resdir noopti_nofiltov_ne2_ifm2 \
+    && \
+nextflow run ${PIPELINE_DIR}/main.nf -profile hq -resume \
     --hapibd_minoutput 2.0 \
     --hapibd_minseed 2.0 \
     --hapibd_minextend 1.0 \
