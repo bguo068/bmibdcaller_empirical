@@ -6,7 +6,7 @@
 
 # conda create -n pf7 python=3.10
 # conda activate pf7
-# pip install -q --no-warn-conflicts malariagen_data matplotlib=7.13.0
+# pip install -q --no-warn-conflicts malariagen_data=7.13.0 matplotlib
 
 import numpy as np
 import dask
