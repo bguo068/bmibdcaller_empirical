@@ -31,3 +31,7 @@ repository. Details can be found Follow the [readme](https://github.com/bguo068/
 Examples of running the pipeline can be found in  
 - [runs/r240113_opt/run.sh](runs/r240113_opt/run.sh).
 - [runs/r240114_noopti/run.sh](runs/r240114_noopti/run.sh).
+
+## Citation
+> Guo Bing, Takala-Harrison Shannon, O’Connor Timothy D (2025). Benchmarking and Optimization of Methods for Detecting
+> Identity-by-Descent in High-Recombining Plasmodium falciparum Genomes. eLife, 14:RP101924. https://doi.org/10.7554/eLife.101924.2
